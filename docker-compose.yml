@@ -16,12 +16,11 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./models:/app/models:ro
+      - ./models/model.onnx:/app/models/model.onnx:ro
       - ./assets:/app/assets:ro
     environment:
-      - MODELS_DIR=/app/models
+      - MODEL_PATH=/app/models/model.onnx
       - BLAZEFACE_MODEL_PATH=/app/assets/blaze_face_short_range.onnx
-      - MAX_CACHED_MODELS=2
       - LOG_LEVEL=info
     restart: unless-stopped
 

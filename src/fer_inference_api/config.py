@@ -10,14 +10,13 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    models_dir: Path = Path("./models")
+    model_path: Path = Path("./models/model.onnx")
     blazeface_model_path: Path = Path("./assets/blaze_face_short_range.onnx")
-    max_cached_models: int = 2
     log_level: str = "info"
 
     @property
-    def resolved_models_dir(self) -> Path:
-        return self.models_dir.resolve()
+    def resolved_model_path(self) -> Path:
+        return self.model_path.resolve()
 
     @property
     def resolved_blazeface_path(self) -> Path:
