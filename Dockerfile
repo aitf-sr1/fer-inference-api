@@ -9,15 +9,26 @@ RUN pip install --no-cache-dir uv \
 
 COPY src/ src/
 
-RUN uv sync --frozen --no-dev
+RUN uv sync --frozen --no-dev \
+    && find /app/.venv -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true \
+    && find /app/.venv -type f -name '*.pyc' -delete 2>/dev/null || true \
+    && find /app/.venv -type d -name 'tests' -exec rm -rf {} + 2>/dev/null || true
 
 
-FROM python:3.13-slim
+FROM python:3.13-alpine
+
+RUN apk add --no-cache \
+    gcompat \
+    libstdc++ \
+    libgomp \
+    openblas \
+    libjpeg-turbo \
+    libpng \
+    libwebp
 
 WORKDIR /app
 
 COPY --from=builder /app/.venv /app/.venv
-
 COPY src/ src/
 
 ENV PATH="/app/.venv/bin:$PATH"
