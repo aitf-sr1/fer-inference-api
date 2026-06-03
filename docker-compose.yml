@@ -7,7 +7,8 @@ services:
     volumes:
       - ssl_data:/ssl
       - ./scripts/generate-certs.sh:/generate-certs.sh:ro
-    entrypoint: ["sh", "-c", "apk add --no-cache openssl && sh /generate-certs.sh"]
+    entrypoint:
+      ["sh", "-c", "apk add --no-cache openssl && sh /generate-certs.sh"]
     environment:
       - SSL_DIR=/ssl
 
@@ -16,10 +17,10 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./models/model.onnx:/app/models/model.onnx:ro
+      - ./models:/app/models:ro
       - ./assets:/app/assets:ro
     environment:
-      - MODEL_PATH=/app/models/model.onnx
+      - MODEL_PATH=/app/models/convnextv2_atto.onnx
       - BLAZEFACE_MODEL_PATH=/app/assets/blaze_face_short_range.onnx
       - LOG_LEVEL=info
     restart: unless-stopped

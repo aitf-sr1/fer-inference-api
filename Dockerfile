@@ -15,16 +15,12 @@ RUN uv sync --frozen --no-dev \
     && find /app/.venv -type d -name 'tests' -exec rm -rf {} + 2>/dev/null || true
 
 
-FROM python:3.13-alpine
+FROM python:3.13-slim
 
-RUN apk add --no-cache \
-    gcompat \
-    libstdc++ \
-    libgomp \
-    openblas \
-    libjpeg-turbo \
-    libpng \
-    libwebp
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    libglib2.0-0t64 \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -39,4 +35,5 @@ ENV OMP_DYNAMIC=FALSE
 EXPOSE 8000
 
 CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "-w", "8", \
-     "--bind", "0.0.0.0:8000", "fer_inference_api.main:app"]
+     "--bind", "0.0.0.0:8000", "--capture-output", \
+     "--enable-stdio-inheritance", "fer_inference_api.main:app"]
