@@ -13,6 +13,9 @@ Facial Expression Recognition inference API.
 git clone git@github.com:aitf-sr1/fer-inference-api.git
 cd fer-inference-api
 
+# Create your config from the example
+cp .env.example .env
+
 # Download model files (see below for details)
 # BlazeFace
 huggingface-cli download unity/inference-engine-blaze-face \
@@ -122,13 +125,14 @@ The `image` field accepts raw base64 or a data URL (`data:image/jpeg;base64,...`
 
 ## Configuration
 
-Settings are loaded from environment variables or a `.env` file:
+Copy `.env.example` to `.env` and adjust as needed. Docker Compose passes it to the container automatically.
 
-| Variable               | Default                                | Description                      |
-| ---------------------- | -------------------------------------- | -------------------------------- |
-| `MODEL_PATH`           | `./models/model.onnx`                  | Path to the FER ONNX model       |
-| `BLAZEFACE_MODEL_PATH` | `./assets/blaze_face_short_range.onnx` | Path to the BlazeFace ONNX model |
-| `LOG_LEVEL`            | `info`                                 | Logging level                    |
+| Variable               | Default                                | Description                 |
+| ---------------------- | -------------------------------------- | --------------------------- |
+| `MODEL_PATH`           | `./models/model.onnx`                  | Path to the FER ONNX model  |
+| `BLAZEFACE_MODEL_PATH` | `./assets/blaze_face_short_range.onnx` | Path to BlazeFace ONNX model |
+| `LOG_LEVEL`            | `info`                                 | Logging level               |
+| `NUM_WORKERS`          | `8`                                    | Gunicorn worker processes   |
 
 ## Tests
 

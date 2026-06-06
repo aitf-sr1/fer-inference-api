@@ -34,6 +34,9 @@ ENV OMP_DYNAMIC=FALSE
 
 EXPOSE 8000
 
-CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "-w", "8", \
-     "--bind", "0.0.0.0:8000", "--capture-output", \
-     "--enable-stdio-inheritance", "fer_inference_api.main:app"]
+CMD gunicorn -k uvicorn.workers.UvicornWorker \
+    -w ${NUM_WORKERS:-8} \
+    --bind 0.0.0.0:8000 \
+    --capture-output \
+    --enable-stdio-inheritance \
+    fer_inference_api.main:app
