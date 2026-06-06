@@ -4,27 +4,26 @@ Facial Expression Recognition inference API.
 
 ## Prerequisites
 
-- Python 3.12+
-- [uv](https://docs.astral.sh/uv/)
+- Docker & Docker Compose
 - ONNX model files (see [Model Files](#model-files))
 
 ## Quick Start
 
 ```bash
-# Clone and install
 git clone git@github.com:aitf-sr1/fer-inference-api.git
 cd fer-inference-api
-uv sync
 
 # Place model files (required)
 cp /path/to/blaze_face_short_range.onnx assets/
-cp /path/to/your_fer_model.onnx models/model.onnx
+cp /path/to/your_fer_model.onnx models/
 
-# Run the server
-uv run uvicorn fer_inference_api.main:app --host 0.0.0.0 --port 8000
+# Start the stack (API + nginx with TLS)
+docker compose up -d --build
 ```
 
-The server starts at `http://localhost:8000`.
+The API is available at `https://localhost` (self-signed cert).
+
+To stop: `docker compose down`.
 
 ## Model Files
 
@@ -105,17 +104,6 @@ Settings are loaded from environment variables or a `.env` file:
 | `MODEL_PATH`           | `./models/model.onnx`                  | Path to the FER ONNX model       |
 | `BLAZEFACE_MODEL_PATH` | `./assets/blaze_face_short_range.onnx` | Path to the BlazeFace ONNX model |
 | `LOG_LEVEL`            | `info`                                 | Logging level                    |
-
-## Docker
-
-```bash
-# Place model files first
-cp /path/to/blaze_face_short_range.onnx assets/
-cp /path/to/your_fer_model.onnx models/model.onnx
-
-# Start the stack (API + nginx with TLS)
-docker compose up -d
-```
 
 ## Tests
 
