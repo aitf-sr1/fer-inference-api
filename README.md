@@ -31,7 +31,7 @@ huggingface-cli download aitf-ub-2026/ub-sr-01-model-fer-convnextv2-datasetv2 \
 docker compose up -d --build
 ```
 
-The API is available at `https://localhost` (self-signed cert).
+The API is available at `https://localhost:8001` (or your configured `HOST_PORT`, self-signed cert).
 
 To stop: `docker compose down`.
 
@@ -132,6 +132,7 @@ Copy `.env.example` to `.env` and adjust as needed. Docker Compose passes it to 
 | `MODEL_PATH`           | `./models/model.onnx`                  | Path to the FER ONNX model  |
 | `BLAZEFACE_MODEL_PATH` | `./assets/blaze_face_short_range.onnx` | Path to BlazeFace ONNX model |
 | `NUM_WORKERS`          | `8`                                    | Gunicorn worker processes   |
+| `HOST_PORT`            | `8001`                                 | Host HTTPS port              |
 
 ## Tests
 
