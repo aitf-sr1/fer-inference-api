@@ -12,7 +12,6 @@ class Settings(BaseSettings):
 
     model_path: Path = Path("./models/model.onnx")
     blazeface_model_path: Path = Path("./assets/blaze_face_short_range.onnx")
-    log_level: str = "info"
 
     @property
     def resolved_model_path(self) -> Path:

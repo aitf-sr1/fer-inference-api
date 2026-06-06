@@ -131,7 +131,6 @@ Copy `.env.example` to `.env` and adjust as needed. Docker Compose passes it to 
 | ---------------------- | -------------------------------------- | --------------------------- |
 | `MODEL_PATH`           | `./models/model.onnx`                  | Path to the FER ONNX model  |
 | `BLAZEFACE_MODEL_PATH` | `./assets/blaze_face_short_range.onnx` | Path to BlazeFace ONNX model |
-| `LOG_LEVEL`            | `info`                                 | Logging level               |
 | `NUM_WORKERS`          | `8`                                    | Gunicorn worker processes   |
 
 ## Tests
