@@ -32,11 +32,11 @@ ENV PYTHONUNBUFFERED=1
 ENV OMP_NUM_THREADS=2
 ENV OMP_DYNAMIC=FALSE
 
-EXPOSE 8000
+EXPOSE 8001
 
 CMD gunicorn -k uvicorn.workers.UvicornWorker \
     -w ${NUM_WORKERS:-8} \
-    --bind 0.0.0.0:8000 \
+    --bind 0.0.0.0:8001 \
     --capture-output \
     --enable-stdio-inheritance \
     fer_inference_api.main:app
