@@ -2,16 +2,16 @@
 #   ssl_data:
 
 services:
-#   generate-certs:
-#     image: alpine:latest
-#     volumes:
-#       - ssl_data:/ssl
-#       - ./scripts/generate-certs.sh:/generate-certs.sh:ro
-#     entrypoint:
-#       ["sh", "-c", "apk add --no-cache openssl && sh /generate-certs.sh"]
-#     environment:
-#       - SSL_DIR=/ssl
-#       - DOMAIN=${DOMAIN:-localhost}
+  #   generate-certs:
+  #     image: alpine:latest
+  #     volumes:
+  #       - ssl_data:/ssl
+  #       - ./scripts/generate-certs.sh:/generate-certs.sh:ro
+  #     entrypoint:
+  #       ["sh", "-c", "apk add --no-cache openssl && sh /generate-certs.sh"]
+  #     environment:
+  #       - SSL_DIR=/ssl
+  #       - DOMAIN=${DOMAIN:-localhost}
 
   api:
     build: .
@@ -22,6 +22,8 @@ services:
       - ./assets:/app/assets:ro
     env_file: .env
     restart: unless-stopped
+    networks:
+      - app_network
 
 #   nginx:
 #     image: nginx:stable-alpine
@@ -36,3 +38,8 @@ services:
 #       api:
 #         condition: service_started
 #     restart: unless-stopped
+#
+
+networks:
+  app_network:
+    external: true
