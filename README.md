@@ -4,10 +4,19 @@ Facial Expression Recognition inference API.
 
 ## Prerequisites
 
+**CPU mode:**
 - Docker & Docker Compose
+
+**GPU mode (additional):**
+- NVIDIA GPU + driver (`nvidia-smi`)
+- [nvidia-container-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
+- Docker restarted after toolkit install
+
 - ONNX model files (see [Model Files](#model-files))
 
 ## Quick Start
+
+### CPU
 
 ```bash
 git clone git@github.com:aitf-sr1/fer-inference-api.git
@@ -25,15 +34,27 @@ huggingface-cli download unity/inference-engine-blaze-face \
 huggingface-cli download aitf-ub-2026/ub-sr-01-model-fer-convnextv2-datasetv2 \
   convnextv2_atto.onnx convnextv2_atto.onnx.data --local-dir models/
 
-# Note: rename/pin the model path in docker-compose.yml if needed
-
-# Start the stack (API + nginx with TLS)
+# Start the API
 docker compose up -d --build
 ```
 
-The API is available at `https://localhost:8001` (or your configured `HOST_PORT`, self-signed cert).
+The API is available at `http://localhost:8001`.
 
-To stop: `docker compose down`.
+### GPU
+
+```bash
+# Use GPU-specific config (fewer workers to fit VRAM)
+cp .env.gpu.example .env
+
+# Build and run with GPU support
+docker compose -f docker-compose.gpu.yml up -d --build
+
+# Verify GPU is active
+curl http://localhost:8001/api/info
+# {"device":"cuda","worker_pid":...}
+```
+
+To stop: `docker compose -f docker-compose.gpu.yml down`.
 
 ## Model Files
 
@@ -125,14 +146,14 @@ The `image` field accepts raw base64 or a data URL (`data:image/jpeg;base64,...`
 
 ## Configuration
 
-Copy `.env.example` to `.env` and adjust as needed. Docker Compose passes it to the container automatically.
+Copy `.env.example` (CPU) or `.env.gpu.example` (GPU) to `.env` and adjust as needed.
 
-| Variable               | Default                                | Description                 |
-| ---------------------- | -------------------------------------- | --------------------------- |
-| `MODEL_PATH`           | `./models/model.onnx`                  | Path to the FER ONNX model  |
-| `BLAZEFACE_MODEL_PATH` | `./assets/blaze_face_short_range.onnx` | Path to BlazeFace ONNX model |
-| `NUM_WORKERS`          | `8`                                    | Gunicorn worker processes   |
-| `HOST_PORT`            | `8001`                                 | Host HTTPS port              |
+| Variable               | CPU default | GPU default | Description                 |
+| ---------------------- | ----------- | ----------- | --------------------------- |
+| `MODEL_PATH`           | `/app/models/convnextv2_atto.onnx` | same | Path to the FER ONNX model |
+| `BLAZEFACE_MODEL_PATH` | `/app/assets/blaze_face_short_range.onnx` | same | Path to BlazeFace ONNX model |
+| `NUM_WORKERS`          | `8`         | `2`         | Gunicorn worker processes   |
+| `HOST_PORT`            | `8001`      | `8001`      | Host port                   |
 
 ## Tests
 
