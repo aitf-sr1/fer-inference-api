@@ -1,0 +1,19 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+    ports:
+      - "${HOST_PORT:-8001}:8001"
+    volumes:
+      - ./models:/app/models:ro
+      - ./assets:/app/assets:ro
+    env_file: .env
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
