@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.6-runtime-ubuntu24.04
+FROM nvidia/cuda:12.6.3-cudnn-runtime-ubuntu24.04
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3.13 python3.13-venv python3.13-dev python3-pip \
