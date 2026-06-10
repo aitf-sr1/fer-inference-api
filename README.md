@@ -11,7 +11,6 @@ Facial Expression Recognition inference API.
 - NVIDIA GPU + driver (`nvidia-smi`)
 - [nvidia-container-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
 - Docker restarted after toolkit install
-
 - ONNX model files (see [Model Files](#model-files))
 
 ## Quick Start
