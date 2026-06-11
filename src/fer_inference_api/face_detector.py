@@ -34,7 +34,6 @@ def _build_anchors() -> np.ndarray:
             for gx in range(grid_size):
                 cx = (gx + 0.5) * stride
                 cy = (gy + 0.5) * stride
-                expected = num_types * len(anchors) * 0
                 if num_types == 2:
                     for s in scales_ar[:2]:
                         anchors.append((cx, cy, s, 1.0))
