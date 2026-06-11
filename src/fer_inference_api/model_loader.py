@@ -9,7 +9,7 @@ _MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 _STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 
 
-def _resolve_providers() -> List[str]:
+def resolve_providers() -> List[str]:
     available = ort.get_available_providers()
     if "CUDAExecutionProvider" in available:
         return ["CUDAExecutionProvider", "CPUExecutionProvider"]
@@ -17,7 +17,7 @@ def _resolve_providers() -> List[str]:
 
 
 def load_model(checkpoint_path: str) -> Tuple[ort.InferenceSession, int]:
-    session = ort.InferenceSession(checkpoint_path, providers=_resolve_providers())
+    session = ort.InferenceSession(checkpoint_path, providers=resolve_providers())
     output_shape = session.get_outputs()[0].shape
     dim2 = output_shape[2] if len(output_shape) >= 3 else None
     num_classes = int(dim2) if isinstance(dim2, int) else 2
@@ -59,4 +59,4 @@ def run_inference(
 
 
 def provider_name() -> str:
-    return _resolve_providers()[0].replace("ExecutionProvider", "").lower()
+    return resolve_providers()[0].replace("ExecutionProvider", "").lower()

@@ -2,7 +2,7 @@ import numpy as np
 
 from fer_inference_api.model_loader import (
     EMOTION_LABELS,
-    _resolve_providers,
+    resolve_providers,
     provider_name,
     run_inference,
 )
@@ -10,11 +10,11 @@ from fer_inference_api.model_loader import (
 
 class TestResolveProviders:
     def test_returns_cpu(self):
-        providers = _resolve_providers()
+        providers = resolve_providers()
         assert "CPUExecutionProvider" in providers
 
     def test_cpu_is_first_when_no_cuda(self):
-        providers = _resolve_providers()
+        providers = resolve_providers()
         assert providers[0] == "CPUExecutionProvider"
 
 

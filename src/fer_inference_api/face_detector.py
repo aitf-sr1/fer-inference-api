@@ -4,6 +4,8 @@ import cv2
 import numpy as np
 import onnxruntime as ort
 
+from .model_loader import resolve_providers
+
 INPUT_SIZE = 128
 OUTPUT_SIZE = 224
 
@@ -92,7 +94,7 @@ def _nms(boxes: np.ndarray, scores: np.ndarray) -> np.ndarray:
 class FaceDetector:
     def __init__(self, model_path: str) -> None:
         self._session = ort.InferenceSession(
-            model_path, providers=["CPUExecutionProvider"]
+            model_path, providers=resolve_providers()
         )
         self._input_name = self._session.get_inputs()[0].name
 
