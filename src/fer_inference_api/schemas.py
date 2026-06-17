@@ -1,10 +1,10 @@
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class InferRequest(BaseModel):
-    image: str
+    image: str = Field(min_length=1, max_length=5_000_000)
 
 
 class InferResponse(BaseModel):

@@ -19,9 +19,14 @@ def test_infer_request_missing_image():
         InferRequest()
 
 
-def test_infer_request_empty_image():
-    req = InferRequest(image="")
-    assert req.image == ""
+def test_infer_request_empty_image_rejected():
+    with pytest.raises(ValidationError):
+        InferRequest(image="")
+
+
+def test_infer_request_oversized_rejected():
+    with pytest.raises(ValidationError):
+        InferRequest(image="x" * 5_000_001)
 
 
 def test_infer_response_face_detected():
