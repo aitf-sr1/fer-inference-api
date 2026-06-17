@@ -1,4 +1,5 @@
 import base64
+import binascii
 import time
 from typing import Any, Dict
 
@@ -52,7 +53,10 @@ class InferencePipeline:
     def infer_base64(self, b64_image: str) -> Dict[str, Any]:
         if "," in b64_image:
             b64_image = b64_image.split(",", 1)[1]
-        img_bytes = base64.b64decode(b64_image, validate=True)
+        try:
+            img_bytes = base64.b64decode(b64_image, validate=True)
+        except binascii.Error:
+            raise ValueError("Invalid base64 encoding.")
         img_array = np.frombuffer(img_bytes, dtype=np.uint8)
         img_bgr = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
         if img_bgr is None:
