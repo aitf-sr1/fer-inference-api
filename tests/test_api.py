@@ -102,7 +102,7 @@ def test_infer_endpoint_500_error():
     mod._pipeline = None
 
     assert response.status_code == 500
-    assert "GPU out of memory" in response.json()["detail"]
+    assert response.json()["detail"] == "Internal server error"
 
 
 
