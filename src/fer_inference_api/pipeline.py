@@ -2,6 +2,7 @@ import base64
 import binascii
 import logging
 import time
+from pathlib import Path
 from typing import Any, Dict
 
 import cv2
@@ -14,21 +15,25 @@ from .model_loader import load_model, provider_name, run_inference
 _logger = logging.getLogger(__name__)
 
 
+def _require_path(path: Path, label: str) -> str:
+    if not path.exists():
+        raise FileNotFoundError(f"{label} not found at {path}")
+    return str(path)
+
+
 class InferencePipeline:
     def __init__(self) -> None:
         blazeface_path = settings.resolved_blazeface_path
-        if not blazeface_path.exists():
-            raise FileNotFoundError(
-                f"BlazeFace model not found at {blazeface_path}"
-            )
         _logger.info("Loading BlazeFace from %s", blazeface_path)
-        self._detector = FaceDetector(str(blazeface_path))
+        self._detector = FaceDetector(
+            _require_path(blazeface_path, "BlazeFace model")
+        )
 
         model_path = settings.resolved_model_path
-        if not model_path.exists():
-            raise FileNotFoundError(f"Model not found at {model_path}")
         _logger.info("Loading FER model from %s", model_path)
-        self._session, self._num_classes = load_model(str(model_path))
+        self._session, self._num_classes = load_model(
+            _require_path(model_path, "FER model")
+        )
 
     @property
     def device(self) -> str:
