@@ -1,7 +1,12 @@
 import pytest
 from pydantic import ValidationError
 
-from fer_inference_api.schemas import DeviceInfo, InferRequest, InferResponse
+from fer_inference_api.schemas import (
+    DeviceInfo,
+    EmotionPrediction,
+    InferRequest,
+    InferResponse,
+)
 
 
 def test_infer_request_with_image():
@@ -40,7 +45,9 @@ def test_infer_response_face_detected():
         bbox=[0.1, 0.2, 0.5, 0.6],
     )
     assert resp.face_detected is True
-    assert resp.emotions == {"Boredom": {"class": 0, "confidence": 85.2}}
+    assert resp.emotions == {
+        "Boredom": EmotionPrediction(class_=0, confidence=85.2)
+    }
     assert resp.num_classes == 4
     assert resp.inference_ms == 15
     assert resp.bbox == [0.1, 0.2, 0.5, 0.6]
