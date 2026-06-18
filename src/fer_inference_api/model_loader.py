@@ -17,10 +17,19 @@ def resolve_providers() -> List[str]:
 
 
 def load_model(checkpoint_path: str) -> Tuple[ort.InferenceSession, int]:
+    """
+    Load an ONNX model and infer the number of classes per emotion label.
+
+    The output shape determines the classification mode:
+    - 2D [batch, num_labels] → binary (2 classes, sigmoid per label)
+    - 3D [batch, num_labels, num_classes] → multiclass (softmax per label)
+    """
     session = ort.InferenceSession(checkpoint_path, providers=resolve_providers())
     output_shape = session.get_outputs()[0].shape
-    dim2 = output_shape[2] if len(output_shape) >= 3 else None
-    num_classes = int(dim2) if isinstance(dim2, int) else 2
+    if len(output_shape) >= 3 and isinstance(output_shape[2], int):
+        num_classes = int(output_shape[2])
+    else:
+        num_classes = 2
     return session, num_classes
 
 
@@ -28,6 +37,13 @@ def run_inference(
     session: ort.InferenceSession,
     face_rgb: np.ndarray,
 ) -> Dict[str, dict]:
+    """
+    Run inference on a 224x224 face crop.
+
+    Supports two output modes:
+    - 2D binary output: sigmoid activations, threshold at 0.5
+    - 3D multiclass output: softmax activations, argmax class selection
+    """
     img = face_rgb.astype(np.float32) / 255.0
     img = (img - _MEAN) / _STD
     img = img.transpose(2, 0, 1)[np.newaxis]
