@@ -24,6 +24,7 @@ def sample_base64_jpeg():
 def test_infer_base64_strips_data_url_prefix(monkeypatch):
     class _FakePipeline(InferencePipeline):
         def __init__(self):
+            self._mock = False
             self._session = _FakeSession()
             self._detector = _FakeDetector()
             self._num_classes = 4
@@ -33,6 +34,7 @@ def test_infer_base64_strips_data_url_prefix(monkeypatch):
             return "cpu"
 
     def _mock_init(self2):
+        self2._mock = False
         self2._session = _FakeSession()
         self2._detector = _FakeDetector()
         self2._num_classes = 4
@@ -56,6 +58,7 @@ def test_infer_base64_strips_data_url_prefix(monkeypatch):
 
 def test_infer_base64_raises_on_invalid_base64(monkeypatch):
     def _mock_init(self2):
+        self2._mock = False
         self2._session = _FakeSession()
         self2._detector = _FakeDetector()
         self2._num_classes = 4
