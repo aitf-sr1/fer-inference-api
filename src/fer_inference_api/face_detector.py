@@ -1,3 +1,4 @@
+import logging
 from typing import Optional, Tuple
 
 import cv2
@@ -5,6 +6,8 @@ import numpy as np
 import onnxruntime as ort
 
 from .model_loader import resolve_providers
+
+_logger = logging.getLogger(__name__)
 
 INPUT_SIZE = 128
 OUTPUT_SIZE = 224
@@ -92,6 +95,7 @@ def _nms(boxes: np.ndarray, scores: np.ndarray) -> np.ndarray:
 
 class FaceDetector:
     def __init__(self, model_path: str) -> None:
+        _logger.info("Loading BlazeFace: %s", model_path)
         self._session = ort.InferenceSession(
             model_path, providers=resolve_providers()
         )

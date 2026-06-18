@@ -1,7 +1,10 @@
+import logging
 from typing import Dict, List, Tuple
 
 import numpy as np
 import onnxruntime as ort
+
+_logger = logging.getLogger(__name__)
 
 EMOTION_LABELS = ["Boredom", "Engagement", "Confusion", "Frustration"]
 
@@ -12,7 +15,9 @@ _STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 def resolve_providers() -> List[str]:
     available = ort.get_available_providers()
     if "CUDAExecutionProvider" in available:
+        _logger.info("CUDA available, using GPU")
         return ["CUDAExecutionProvider", "CPUExecutionProvider"]
+    _logger.info("Using CPU")
     return ["CPUExecutionProvider"]
 
 

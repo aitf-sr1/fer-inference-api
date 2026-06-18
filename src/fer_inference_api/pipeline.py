@@ -1,5 +1,6 @@
 import base64
 import binascii
+import logging
 import time
 from typing import Any, Dict
 
@@ -10,6 +11,8 @@ from .config import settings
 from .face_detector import FaceDetector, detect_and_crop
 from .model_loader import load_model, provider_name, run_inference
 
+_logger = logging.getLogger(__name__)
+
 
 class InferencePipeline:
     def __init__(self) -> None:
@@ -18,11 +21,13 @@ class InferencePipeline:
             raise FileNotFoundError(
                 f"BlazeFace model not found at {blazeface_path}"
             )
+        _logger.info("Loading BlazeFace from %s", blazeface_path)
         self._detector = FaceDetector(str(blazeface_path))
 
         model_path = settings.resolved_model_path
         if not model_path.exists():
             raise FileNotFoundError(f"Model not found at {model_path}")
+        _logger.info("Loading FER model from %s", model_path)
         self._session, self._num_classes = load_model(str(model_path))
 
     @property
