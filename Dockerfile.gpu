@@ -12,9 +12,13 @@ WORKDIR /app
 
 COPY pyproject.toml ./
 
-RUN pip install --no-cache-dir $(python3 -c "import tomllib; \
+ARG ONNX_GPU_VERSION=1.19.2
+
+RUN pip install --no-cache-dir $( \
+    python3 -c "import tomllib; \
     deps = tomllib.load(open('pyproject.toml','rb'))['project']['dependencies']; \
-    print(' '.join([d.replace('onnxruntime>=', 'onnxruntime-gpu>=') for d in deps]))")
+    print(' '.join(d for d in deps if 'onnxruntime' not in d))" \
+    ) "onnxruntime-gpu==${ONNX_GPU_VERSION}"
 
 COPY src/ src/
 
