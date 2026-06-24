@@ -2,26 +2,18 @@
 """Run Locust sweeps across multiple API server configurations and compare results.
 
 Usage:
-    # Test different worker counts
+    # Local server (starts/stops uvicorn per config)
+    uv run bench/run_config_sweep.py --preset mock
+
+    # Docker GPU container (starts/stops docker compose per config)
     uv run bench/run_config_sweep.py \
-        --label workers \
+        --docker-compose docker-compose.gpu.yml \
         --var "NUM_WORKERS=1" \
-        --var "NUM_WORKERS=2" \
-        --var "NUM_WORKERS=4" \
-        --var "NUM_WORKERS=8"
+        --var "NUM_WORKERS=2"
 
-    # Test OMP thread counts
+    # Against already-running server (no lifecycle management)
     uv run bench/run_config_sweep.py \
-        --label omp \
-        --var "OMP_NUM_THREADS=1" \
-        --var "OMP_NUM_THREADS=2" \
-        --var "OMP_NUM_THREADS=4"
-
-    # Test mock vs real
-    uv run bench/run_config_sweep.py \
-        --label mock \
-        --var "MOCK_MODE=true" \
-        --var "MOCK_MODE=false"
+        --no-server --port 8001 --duration 30
 
     # Use presets for common scenarios
     uv run bench/run_config_sweep.py --preset workers
@@ -97,6 +89,48 @@ def _start_server(
         preexec_fn=os.setsid,
     )
     return proc
+
+
+def _start_docker(
+    compose_file: str, port: int, env_vars: dict[str, str]
+) -> None:
+    env = os.environ.copy()
+    env.update(env_vars)
+    env["HOST_PORT"] = str(port)
+
+    subprocess.run(
+        [
+            "docker", "compose", "-f", compose_file,
+            "down", "--remove-orphans",
+        ],
+        env=env,
+        capture_output=True,
+        timeout=30,
+    )
+
+    subprocess.run(
+        [
+            "docker", "compose", "-f", compose_file,
+            "up", "-d", "--build",
+        ],
+        env=env,
+        check=True,
+        timeout=120,
+    )
+
+
+def _stop_docker(compose_file: str, env_vars: dict[str, str]) -> None:
+    env = os.environ.copy()
+    env.update(env_vars)
+    subprocess.run(
+        [
+            "docker", "compose", "-f", compose_file,
+            "down", "--remove-orphans",
+        ],
+        env=env,
+        capture_output=True,
+        timeout=30,
+    )
 
 
 def _wait_healthy(host: str, timeout: int = _HEALTH_TIMEOUT) -> bool:
@@ -269,6 +303,18 @@ def main():
         default=18001,
         help="Port for the API server (default: 18001)",
     )
+    parser.add_argument(
+        "--no-server",
+        action="store_true",
+        help="Don't manage server lifecycle — just run sweeps",
+    )
+    parser.add_argument(
+        "--docker-compose",
+        type=str,
+        default=None,
+        metavar="FILE",
+        help="Use docker compose to manage server (e.g. docker-compose.gpu.yml)",
+    )
     args = parser.parse_args()
 
     env_configs = []
@@ -298,19 +344,35 @@ def main():
     print()
 
     all_results: dict[str, dict[int, dict]] = {}
+    compose_file = args.docker_compose
 
     for cfg in env_configs:
         label = _var_label(cfg)
         print(f"=== {label} ===")
 
-        proc = _start_server(args.port, cfg)
-        print(f"  Server starting (PID={proc.pid})...", end="", flush=True)
-
-        if not _wait_healthy(host):
-            print(" FAILED to start")
-            _stop_server(proc)
-            all_results[label] = {}
-            continue
+        if args.no_server:
+            if not _wait_healthy(host, timeout=5):
+                print("  Server not reachable — skipping")
+                all_results[label] = {}
+                continue
+            print(f"  Connected to {host}")
+        elif compose_file:
+            print(f"  Docker compose up (file={compose_file})...", end="", flush=True)
+            _start_docker(compose_file, args.port, cfg)
+            if not _wait_healthy(host, timeout=60):
+                print(" FAILED to start")
+                _stop_docker(compose_file, cfg)
+                all_results[label] = {}
+                continue
+            print(" OK")
+        else:
+            proc = _start_server(args.port, cfg)
+            print(f"  Server starting (PID={proc.pid})...", end="", flush=True)
+            if not _wait_healthy(host):
+                print(" FAILED to start")
+                _stop_server(proc)
+                all_results[label] = {}
+                continue
 
         # Fetch device info
         try:
@@ -322,17 +384,21 @@ def main():
                 ).read()
             )
             print(
-                f" OK (device={info.get('device')}, "
+                f" (device={info.get('device')}, "
                 f"pid={info.get('worker_pid')})"
             )
         except Exception:
-            print(" OK")
+            print("")
 
         try:
             results = _run_sweep(host, args.duration, concurrency)
         finally:
-            _stop_server(proc)
-            time.sleep(1)
+            if not args.no_server:
+                if compose_file:
+                    _stop_docker(compose_file, cfg)
+                else:
+                    _stop_server(proc)
+                time.sleep(1)
 
         all_results[label] = results
         print()
