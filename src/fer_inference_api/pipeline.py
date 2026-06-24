@@ -87,7 +87,10 @@ class InferencePipeline:
         if self._mock:
             return _mock_infer(self._num_classes)
 
+        t_detect = time.perf_counter()
         face, bbox = detect_and_crop(img_rgb, self._detector)
+        t_crop = time.perf_counter()
+
         if face is None:
             return {
                 "face_detected": False,
@@ -95,19 +98,34 @@ class InferencePipeline:
                 "num_classes": self._num_classes,
                 "inference_ms": None,
                 "bbox": None,
+                "timings": {
+                    "face_detect_ms": round((t_crop - t_detect) * 1000, 2),
+                },
             }
-        t0 = time.perf_counter()
+
         emotions = run_inference(self._session, face)
-        inference_ms = round((time.perf_counter() - t0) * 1000)
+        t_infer = time.perf_counter()
+
+        face_detect_ms = round((t_crop - t_detect) * 1000, 2)
+        face_crop_ms = round(0, 2)
+        emotion_ms = round((t_infer - t_crop) * 1000)
+
         return {
             "face_detected": True,
             "emotions": emotions,
             "num_classes": self._num_classes,
-            "inference_ms": inference_ms,
+            "inference_ms": emotion_ms,
             "bbox": list(bbox),
+            "timings": {
+                "face_detect_ms": face_detect_ms,
+                "face_crop_ms": face_crop_ms,
+                "emotion_ms": emotion_ms,
+            },
         }
 
     def infer_base64(self, b64_image: str) -> Dict[str, Any]:
+        t_start = time.perf_counter()
+
         if self._mock:
             if "," in b64_image:
                 b64_image = b64_image.split(",", 1)[1]
@@ -119,12 +137,25 @@ class InferencePipeline:
             img_bytes = base64.b64decode(b64_image, validate=True)
         except binascii.Error:
             raise ValueError("Invalid base64 encoding.")
+
+        t_decode = time.perf_counter()
         img_array = np.frombuffer(img_bytes, dtype=np.uint8)
         img_bgr = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
         if img_bgr is None:
             raise ValueError("Could not decode image.")
         img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
-        return self.infer(img_rgb)
+        decode_ms = round((time.perf_counter() - t_decode) * 1000, 2)
+
+        result = self.infer(img_rgb)
+        total_ms = round((time.perf_counter() - t_start) * 1000, 2)
+
+        result["timings"] = {
+            "total_ms": total_ms,
+            "decode_ms": decode_ms,
+            **(result.get("timings") or {}),
+        }
+
+        return result
 
 
 def load_model(*args, **kwargs):

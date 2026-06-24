@@ -49,6 +49,13 @@ def mock_pipeline_result(mock_emotions) -> Dict[str, Any]:
         "num_classes": 4,
         "inference_ms": 15,
         "bbox": [0.15625, 0.16666666666666666, 0.546875, 0.8333333333333334],
+        "timings": {
+            "total_ms": 25.5,
+            "decode_ms": 5.2,
+            "face_detect_ms": 10.1,
+            "face_crop_ms": 0.0,
+            "emotion_ms": 15,
+        },
     }
 
 
@@ -60,6 +67,11 @@ def mock_pipeline_no_face() -> Dict[str, Any]:
         "num_classes": 4,
         "inference_ms": None,
         "bbox": None,
+        "timings": {
+            "total_ms": 8.3,
+            "decode_ms": 5.1,
+            "face_detect_ms": 3.2,
+        },
     }
 
 

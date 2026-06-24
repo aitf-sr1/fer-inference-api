@@ -4,7 +4,6 @@ import cv2
 import numpy as np
 import pytest
 
-from fer_inference_api.face_detector import FaceDetector
 from fer_inference_api.pipeline import InferencePipeline
 
 

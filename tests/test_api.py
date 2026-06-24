@@ -105,4 +105,36 @@ def test_infer_endpoint_500_error():
     assert response.json()["detail"] == "Internal server error"
 
 
+def test_metrics_endpoint_initial_empty(test_client):
+    import fer_inference_api.main as mod
+
+    mod._metrics.reset()
+    response = test_client.get("/api/metrics")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["requests"] == 0
+    assert data["avg_total_ms"] is None
+
+
+def test_metrics_endpoint_after_infer(test_client):
+    import fer_inference_api.main as mod
+
+    mod._metrics.reset()
+    img = np.zeros((480, 640, 3), dtype=np.uint8)
+    _, buf = cv2.imencode(".jpg", img)
+    b64 = base64.b64encode(buf).decode()
+
+    for _ in range(5):
+        test_client.post("/api/infer", json={"image": b64})
+
+    response = test_client.get("/api/metrics")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["requests"] >= 1
+    assert data["avg_total_ms"] is not None
+    assert data["p50_total_ms"] is not None
+    assert data["avg_decode_ms"] is not None
+    assert data["avg_face_detect_ms"] is not None
+
+
 

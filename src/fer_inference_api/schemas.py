@@ -13,12 +13,33 @@ class EmotionPrediction(BaseModel):
     confidence: float
 
 
+class InferenceTimings(BaseModel):
+    total_ms: Optional[float] = None
+    decode_ms: Optional[float] = None
+    face_detect_ms: Optional[float] = None
+    face_crop_ms: Optional[float] = None
+    emotion_ms: Optional[float] = None
+
+
 class InferResponse(BaseModel):
     face_detected: bool
     emotions: Optional[Dict[str, EmotionPrediction]] = None
     num_classes: int
     inference_ms: Optional[int] = None
     bbox: Optional[List[float]] = None
+    timings: Optional[InferenceTimings] = None
+
+
+class MetricsSummary(BaseModel):
+    requests: int
+    avg_total_ms: Optional[float] = None
+    p50_total_ms: Optional[float] = None
+    p95_total_ms: Optional[float] = None
+    p99_total_ms: Optional[float] = None
+    avg_decode_ms: Optional[float] = None
+    avg_face_detect_ms: Optional[float] = None
+    avg_face_crop_ms: Optional[float] = None
+    avg_emotion_ms: Optional[float] = None
 
 
 class DeviceInfo(BaseModel):
