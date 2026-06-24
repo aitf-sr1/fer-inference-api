@@ -13,8 +13,17 @@ EMOTION_LABELS = ["Boredom", "Engagement", "Confusion", "Frustration"]
 _MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 _STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 
-_WARMUP_FACE = np.random.randint(0, 256, (224, 224, 3), dtype=np.uint8)
-_WARMUP_DETECT = np.random.randint(0, 256, (128, 128, 3), dtype=np.uint8)
+_WARMUP_FACE = (
+    np.random.randint(0, 256, (224, 224, 3), dtype=np.uint8)
+    .astype(np.float32)
+    / 255.0
+)
+_WARMUP_FACE = ((_WARMUP_FACE - _MEAN) / _STD).transpose(2, 0, 1)[np.newaxis]
+_WARMUP_DETECT = (
+    np.random.randint(0, 256, (128, 128, 3), dtype=np.uint8)
+    .astype(np.float32)
+    / 255.0
+)[np.newaxis]
 
 
 def create_session_options() -> ort.SessionOptions:
@@ -102,4 +111,4 @@ def provider_name() -> str:
 
 def warmup(session: ort.InferenceSession) -> None:
     input_name = session.get_inputs()[0].name
-    session.run(None, {input_name: _WARMUP_FACE.astype(np.float32)[np.newaxis]})
+    session.run(None, {input_name: _WARMUP_FACE})
