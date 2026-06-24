@@ -25,6 +25,7 @@ packages = ["src/fer_inference_api"]
 dev = [
     "httpx2>=2.0.0",
     "locust>=2.44.4",
+    "py-spy>=0.4.2",
     "pytest>=8.0.0",
 ]
 
