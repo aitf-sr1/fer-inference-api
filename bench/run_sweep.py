@@ -2,7 +2,7 @@
 """Run Locust load tests across multiple concurrency levels and report results.
 
 Usage:
-    uv run bench/run_sweep.py [--host HOST] [--duration SECONDS]
+    uv run bench/run_sweep.py [--host HOST] [--duration SECONDS] [--image-size small|medium|large|mixed|WxH]
 
 Before running, start the API server in another terminal:
     uv run uvicorn fer_inference_api.main:app --port 8001
@@ -10,6 +10,7 @@ Before running, start the API server in another terminal:
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -22,7 +23,13 @@ _LOCUSTFILE = _BENCH_DIR / "locustfile.py"
 _CONCURRENCIES = [1, 2, 4, 8, 16, 32, 64]
 
 
-def run_locust(host: str, users: int, duration: int) -> dict:
+def run_locust(
+    host: str, users: int, duration: int, image_size: str | None = None
+) -> dict:
+    env = os.environ.copy()
+    if image_size:
+        env["IMAGE_SIZE"] = image_size
+
     with tempfile.NamedTemporaryFile(
         suffix=".csv", mode="w+", delete=False
     ) as stats_file:
@@ -47,12 +54,12 @@ def run_locust(host: str, users: int, duration: int) -> dict:
                 "--headless",
                 "--csv",
                 stats_path,
-                "--csv-disable-http-parse-error-logging",
             ],
             cwd=Path.cwd(),
             capture_output=True,
             text=True,
             timeout=duration + 30,
+            env=env,
         )
 
         csv_stats = Path(stats_path + "_stats.csv")
@@ -81,12 +88,12 @@ def _parse_csv_stats(csv_path: Path) -> dict:
         "requests": int(infer["Request Count"]),
         "failures": int(infer["Failure Count"]),
         "rps": float(infer["Requests/s"]),
-        "avg_ms": float(infer["Average (ms)"]),
-        "p50_ms": float(infer["50% (ms)"]),
-        "p90_ms": float(infer["90% (ms)"]),
-        "p95_ms": float(infer.get("95% (ms)", 0)),
-        "p99_ms": float(infer.get("99% (ms)", 0)),
-        "max_ms": float(infer["Max (ms)"]),
+        "avg_ms": float(infer["Average Response Time"]),
+        "p50_ms": float(infer["Median Response Time"]),
+        "p90_ms": float(infer["90%"]),
+        "p95_ms": float(infer["95%"]),
+        "p99_ms": float(infer["99%"]),
+        "max_ms": float(infer["Max Response Time"]),
     }
 
 
@@ -94,10 +101,16 @@ def main():
     parser = argparse.ArgumentParser(description="Locust concurrency sweep")
     parser.add_argument("--host", default="http://localhost:8001")
     parser.add_argument("--duration", type=int, default=30)
+    parser.add_argument(
+        "--image-size",
+        choices=["small", "medium", "large", "mixed"],
+        default="mixed",
+    )
     args = parser.parse_args()
 
     print(f"Target: {args.host}")
     print(f"Duration per level: {args.duration}s")
+    print(f"Image size: {args.image_size}")
     print(f"Concurrency levels: {_CONCURRENCIES}")
     print()
     print(
@@ -110,7 +123,7 @@ def main():
     results = []
     for users in _CONCURRENCIES:
         print(f"{users:>6} ", end="", flush=True)
-        result = run_locust(args.host, users, args.duration)
+        result = run_locust(args.host, users, args.duration, args.image_size)
         results.append((users, result))
 
         if "error" in result:
