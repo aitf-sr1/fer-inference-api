@@ -34,18 +34,26 @@ def _random_emotions(num_classes: int) -> Dict[str, dict]:
 
 def _mock_infer(num_classes: int) -> Dict[str, Any]:
     face_detected = random.random() > 0.05
+    timings = {
+        "total_ms": round(random.uniform(5, 40), 2),
+        "decode_ms": round(random.uniform(1, 8), 2),
+        "face_detect_ms": round(random.uniform(2, 15), 2),
+        "face_crop_ms": round(0, 2),
+    }
     if face_detected:
+        timings["emotion_ms"] = round(random.uniform(3, 20), 2)
         return {
             "face_detected": True,
             "emotions": _random_emotions(num_classes),
             "num_classes": num_classes,
-            "inference_ms": random.randint(5, 30),
+            "inference_ms": round(timings["emotion_ms"]),
             "bbox": [
                 round(random.uniform(0.05, 0.45), 4),
                 round(random.uniform(0.05, 0.45), 4),
                 round(random.uniform(0.55, 0.95), 4),
                 round(random.uniform(0.55, 0.95), 4),
             ],
+            "timings": timings,
         }
     return {
         "face_detected": False,
@@ -53,6 +61,7 @@ def _mock_infer(num_classes: int) -> Dict[str, Any]:
         "num_classes": num_classes,
         "inference_ms": None,
         "bbox": None,
+        "timings": timings,
     }
 
 
@@ -76,6 +85,11 @@ class InferencePipeline:
         self._session, self._num_classes = load_model(
             _require_path(model_path, "FER model")
         )
+
+        _logger.info("Warming up models...")
+        self._detector.warmup()
+        warmup_model(self._session)
+        _logger.info("Models ready")
 
     @property
     def device(self) -> str:
@@ -168,3 +182,7 @@ def provider_name(*args, **kwargs):
 
 def run_inference(*args, **kwargs):
     return model_loader.run_inference(*args, **kwargs)
+
+
+def warmup_model(*args, **kwargs):
+    return model_loader.warmup(*args, **kwargs)

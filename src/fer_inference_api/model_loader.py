@@ -4,12 +4,32 @@ from typing import Dict, List, Tuple
 import numpy as np
 import onnxruntime as ort
 
+from .config import settings
+
 _logger = logging.getLogger(__name__)
 
 EMOTION_LABELS = ["Boredom", "Engagement", "Confusion", "Frustration"]
 
 _MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 _STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+
+_WARMUP_FACE = np.random.randint(0, 256, (224, 224, 3), dtype=np.uint8)
+_WARMUP_DETECT = np.random.randint(0, 256, (128, 128, 3), dtype=np.uint8)
+
+
+def create_session_options() -> ort.SessionOptions:
+    opts = ort.SessionOptions()
+    opts.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+    opts.enable_mem_pattern = True
+    opts.enable_mem_reuse = True
+    opts.enable_cpu_mem_arena = True
+    if settings.onnx_intra_threads > 0:
+        opts.intra_op_num_threads = settings.onnx_intra_threads
+        _logger.info("ONNX intra_op_num_threads=%d", settings.onnx_intra_threads)
+    if settings.onnx_inter_threads > 0:
+        opts.inter_op_num_threads = settings.onnx_inter_threads
+        _logger.info("ONNX inter_op_num_threads=%d", settings.onnx_inter_threads)
+    return opts
 
 
 def resolve_providers() -> List[str]:
@@ -22,14 +42,11 @@ def resolve_providers() -> List[str]:
 
 
 def load_model(checkpoint_path: str) -> Tuple[ort.InferenceSession, int]:
-    """
-    Load an ONNX model and infer the number of classes per emotion label.
-
-    The output shape determines the classification mode:
-    - 2D [batch, num_labels] → binary (2 classes, sigmoid per label)
-    - 3D [batch, num_labels, num_classes] → multiclass (softmax per label)
-    """
-    session = ort.InferenceSession(checkpoint_path, providers=resolve_providers())
+    session = ort.InferenceSession(
+        checkpoint_path,
+        sess_options=create_session_options(),
+        providers=resolve_providers(),
+    )
     output_shape = session.get_outputs()[0].shape
     if len(output_shape) >= 3 and isinstance(output_shape[2], int):
         num_classes = int(output_shape[2])
@@ -81,3 +98,8 @@ def run_inference(
 
 def provider_name() -> str:
     return resolve_providers()[0].replace("ExecutionProvider", "").lower()
+
+
+def warmup(session: ort.InferenceSession) -> None:
+    input_name = session.get_inputs()[0].name
+    session.run(None, {input_name: _WARMUP_FACE.astype(np.float32)[np.newaxis]})

@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 import onnxruntime as ort
 
-from .model_loader import resolve_providers
+from .model_loader import create_session_options, resolve_providers
 
 _logger = logging.getLogger(__name__)
 
@@ -97,9 +97,19 @@ class FaceDetector:
     def __init__(self, model_path: str) -> None:
         _logger.info("Loading BlazeFace: %s", model_path)
         self._session = ort.InferenceSession(
-            model_path, providers=resolve_providers()
+            model_path,
+            sess_options=create_session_options(),
+            providers=resolve_providers(),
         )
         self._input_name = self._session.get_inputs()[0].name
+
+    def warmup(self) -> None:
+        blob = (
+            np.random.randint(0, 256, (INPUT_SIZE, INPUT_SIZE, 3), dtype=np.uint8)
+            .astype(np.float32)
+            / 255.0
+        )[np.newaxis]
+        self._session.run(None, {self._input_name: blob})
 
     def detect(
         self, img_rgb: np.ndarray
