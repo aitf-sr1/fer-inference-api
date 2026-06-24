@@ -315,7 +315,16 @@ def main():
         metavar="FILE",
         help="Use docker compose to manage server (e.g. docker-compose.gpu.yml)",
     )
+    parser.add_argument(
+        "--face-image",
+        type=str,
+        default=None,
+        help="Path to JPEG face image for realistic inference testing",
+    )
     args = parser.parse_args()
+
+    if args.face_image:
+        os.environ["FACE_IMAGE_PATH"] = os.path.abspath(args.face_image)
 
     env_configs = []
     if args.preset:

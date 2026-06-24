@@ -106,12 +106,31 @@ def main():
         choices=["small", "medium", "large", "mixed"],
         default="mixed",
     )
+    parser.add_argument(
+        "--concurrency",
+        type=int,
+        nargs="+",
+        default=_CONCURRENCIES,
+        help=f"Concurrency levels to sweep (default: {_CONCURRENCIES})",
+    )
+    parser.add_argument(
+        "--face-image",
+        type=str,
+        default=None,
+        help="Path to JPEG face image for realistic inference testing",
+    )
     args = parser.parse_args()
+
+    if args.face_image:
+        os.environ["FACE_IMAGE_PATH"] = os.path.abspath(args.face_image)
+
+    concurrency = args.concurrency
 
     print(f"Target: {args.host}")
     print(f"Duration per level: {args.duration}s")
     print(f"Image size: {args.image_size}")
-    print(f"Concurrency levels: {_CONCURRENCIES}")
+    print(f"Face image: {args.face_image or 'random noise'}")
+    print(f"Concurrency levels: {concurrency}")
     print()
     print(
         f"{'Users':>6} {'RPS':>8} {'Avg(ms)':>9} "
@@ -121,7 +140,7 @@ def main():
     print("-" * 85)
 
     results = []
-    for users in _CONCURRENCIES:
+    for users in concurrency:
         print(f"{users:>6} ", end="", flush=True)
         result = run_locust(args.host, users, args.duration, args.image_size)
         results.append((users, result))

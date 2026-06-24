@@ -46,8 +46,24 @@ def _parse_size_spec(spec: str | None) -> list[tuple[int, int]]:
     return _SIZE_PRESETS["mixed"]
 
 
+def _load_face_image(path: str) -> str:
+    img = cv2.imread(path)
+    if img is None:
+        raise ValueError(f"Cannot read image: {path}")
+    _, buf = cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, 85])
+    return base64.b64encode(buf).decode()
+
+
 def _init_pool():
     global _image_pool
+
+    face_path = os.environ.get("FACE_IMAGE_PATH")
+    if face_path:
+        b64 = _load_face_image(face_path)
+        _image_pool = [b64] * _POOL_SIZE
+        _logger.info("Loaded face image from %s", face_path)
+        return
+
     size_spec = os.environ.get("IMAGE_SIZE", "mixed")
     sizes = _parse_size_spec(size_spec)
     for _ in range(_POOL_SIZE):
