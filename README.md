@@ -29,9 +29,9 @@ cp .env.example .env
 huggingface-cli download unity/inference-engine-blaze-face \
   blaze_face_short_range.onnx --local-dir assets/
 
-# ConvNeXt V2 FER model (graph + external weights)
-huggingface-cli download aitf-ub-2026/ub-sr-01-model-fer-convnextv2-datasetv2 \
-  convnextv2_atto.onnx convnextv2_atto.onnx.data --local-dir models/
+# ConvNeXt V2 FER model
+huggingface-cli download aitf-ub-2026/ub-sr-01-model-fer-convnextv2-datasetv3 \
+  convnextv2_femto.onnx --local-dir models/
 
 # Start the API
 docker compose up -d --build
@@ -62,7 +62,7 @@ Two ONNX model files are required:
 | Model     | Files                          | Default Path                         | Description                          |
 | --------- | ------------------------------ | ------------------------------------ | ------------------------------------ |
 | BlazeFace | `blaze_face_short_range.onnx`  | `assets/blaze_face_short_range.onnx` | Face detection model (128x128 input) |
-| ConvNeXt  | `convnextv2_atto.onnx` + `.data` | `models/convnextv2_atto.onnx`        | FER model (224x224 input)            |
+| ConvNeXt  | `convnextv2_femto.onnx`          | `models/convnextv2_femto.onnx`       | FER model (224x224 input)            |
 
 ### Download
 
@@ -73,14 +73,14 @@ huggingface-cli download unity/inference-engine-blaze-face \
   blaze_face_short_range.onnx --local-dir assets/
 ```
 
-**ConvNeXt V2** (FER) — [aitf-ub-2026/ub-sr-01-model-fer-convnextv2-datasetv2](https://huggingface.co/aitf-ub-2026/ub-sr-01-model-fer-convnextv2-datasetv2/tree/main)
+**ConvNeXt V2 Femto** (FER) — [aitf-ub-2026/ub-sr-01-model-fer-convnextv2-datasetv3](https://huggingface.co/aitf-ub-2026/ub-sr-01-model-fer-convnextv2-datasetv3/tree/main)
 
 ```bash
-huggingface-cli download aitf-ub-2026/ub-sr-01-model-fer-convnextv2-datasetv2 \
-  convnextv2_atto.onnx convnextv2_atto.onnx.data --local-dir models/
+huggingface-cli download aitf-ub-2026/ub-sr-01-model-fer-convnextv2-datasetv3 \
+  convnextv2_femto.onnx --local-dir models/
 ```
 
-> The ConvNeXt model uses ONNX external data — the `.onnx` file contains the graph, the `.onnx.data` file contains the weights. Both must be present in the same directory.
+> The previous ConvNeXt Atto model used external ONNX data (`.onnx.data` file). The Femto model is a single self-contained `.onnx` file — no companion file needed.
 
 Paths can be overridden via environment variables (see [Configuration](#configuration)).
 
@@ -149,7 +149,7 @@ Copy `.env.example` (CPU) or `.env.gpu.example` (GPU) to `.env` and adjust as ne
 
 | Variable               | CPU default | GPU default | Description                 |
 | ---------------------- | ----------- | ----------- | --------------------------- |
-| `MODEL_PATH`           | `/app/models/convnextv2_atto.onnx` | same | Path to the FER ONNX model |
+| `MODEL_PATH`           | `/app/models/convnextv2_femto.onnx` | same | Path to the FER ONNX model |
 | `BLAZEFACE_MODEL_PATH` | `/app/assets/blaze_face_short_range.onnx` | same | Path to BlazeFace ONNX model |
 | `NUM_WORKERS`          | `8`         | `2`         | Gunicorn worker processes   |
 | `HOST_PORT`            | `8001`      | `8001`      | Host port                   |
