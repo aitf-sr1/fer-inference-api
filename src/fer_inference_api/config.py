@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     mock_mode: bool = False
     onnx_intra_threads: int = 0
     onnx_inter_threads: int = 0
+    gpu_mem_limit: int = 1_073_741_824
 
     @property
     def resolved_model_path(self) -> Path:

@@ -43,11 +43,18 @@ def create_session_options() -> ort.SessionOptions:
     return opts
 
 
-def resolve_providers() -> List[str]:
+def resolve_providers() -> List[str | tuple]:
     available = ort.get_available_providers()
     if "CUDAExecutionProvider" in available:
-        _logger.info("CUDA available, using GPU")
-        return ["CUDAExecutionProvider", "CPUExecutionProvider"]
+        _logger.info(
+            "CUDA available, using GPU (arena cap=%d MB)",
+            settings.gpu_mem_limit // (1024 * 1024),
+        )
+        cuda_opts = {
+            "gpu_mem_limit": str(settings.gpu_mem_limit),
+            "arena_extend_strategy": "kSameAsRequested",
+        }
+        return [("CUDAExecutionProvider", cuda_opts), "CPUExecutionProvider"]
     _logger.info("Using CPU")
     return ["CPUExecutionProvider"]
 
