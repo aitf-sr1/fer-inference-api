@@ -1,4 +1,6 @@
 import logging
+import threading
+from contextlib import nullcontext
 from typing import Dict, List, Tuple
 
 import numpy as np
@@ -56,6 +58,7 @@ def load_model(checkpoint_path: str) -> Tuple[ort.InferenceSession, int]:
         sess_options=create_session_options(),
         providers=resolve_providers(),
     )
+    session._lock = threading.Lock()
     output_shape = session.get_outputs()[0].shape
     if len(output_shape) >= 3 and isinstance(output_shape[2], int):
         num_classes = int(output_shape[2])
@@ -80,7 +83,8 @@ def run_inference(
     img = img.transpose(2, 0, 1)[np.newaxis]
 
     input_name = session.get_inputs()[0].name
-    logits = session.run(None, {input_name: img})[0]
+    with getattr(session, "_lock", None) or nullcontext():
+        logits = session.run(None, {input_name: img})[0]
 
     if logits.ndim == 2:
         scores = 1.0 / (1.0 + np.exp(-logits.squeeze(0)))
@@ -111,4 +115,5 @@ def provider_name() -> str:
 
 def warmup(session: ort.InferenceSession) -> None:
     input_name = session.get_inputs()[0].name
-    session.run(None, {input_name: _WARMUP_FACE})
+    with getattr(session, "_lock", None) or nullcontext():
+        session.run(None, {input_name: _WARMUP_FACE})

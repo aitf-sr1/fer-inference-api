@@ -1,4 +1,5 @@
 import logging
+import threading
 from typing import Optional, Tuple
 
 import cv2
@@ -102,6 +103,7 @@ class FaceDetector:
             providers=resolve_providers(),
         )
         self._input_name = self._session.get_inputs()[0].name
+        self._lock = threading.Lock()
 
     def warmup(self) -> None:
         blob = (
@@ -109,7 +111,8 @@ class FaceDetector:
             .astype(np.float32)
             / 255.0
         )[np.newaxis]
-        self._session.run(None, {self._input_name: blob})
+        with self._lock:
+            self._session.run(None, {self._input_name: blob})
 
     def detect(
         self, img_rgb: np.ndarray
@@ -119,9 +122,10 @@ class FaceDetector:
         resized = cv2.resize(img_rgb, (INPUT_SIZE, INPUT_SIZE))
         blob = (resized.astype(np.float32) / 255.0)[np.newaxis]
 
-        regressors, classificators = self._session.run(
-            None, {self._input_name: blob}
-        )
+        with self._lock:
+            regressors, classificators = self._session.run(
+                None, {self._input_name: blob}
+            )
 
         raw_scores = np.clip(classificators[0, :, 0], -88.0, 88.0)
         scores = 1.0 / (1.0 + np.exp(-raw_scores))
