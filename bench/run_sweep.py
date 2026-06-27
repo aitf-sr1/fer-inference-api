@@ -24,7 +24,9 @@ _CONCURRENCIES = [1, 2, 4, 8, 16, 32, 64]
 
 
 def run_locust(
-    host: str, users: int, duration: int, image_size: str | None = None
+    host: str, users: int, duration: int,
+    image_size: str | None = None,
+    endpoint_type: str = "both",
 ) -> dict:
     env = os.environ.copy()
     if image_size:
@@ -54,6 +56,8 @@ def run_locust(
                 "--headless",
                 "--csv",
                 stats_path,
+                "--type",
+                endpoint_type,
             ],
             cwd=Path.cwd(),
             capture_output=True,
@@ -80,9 +84,9 @@ def _parse_csv_stats(csv_path: Path) -> dict:
         for row in reader:
             rows.append(row)
 
-    infer = next((r for r in rows if r["Name"] == "/api/infer"), None)
+    infer = next((r for r in rows if r["Name"] in ("/api/infer", "/api/infer/raw")), None)
     if not infer:
-        return {"error": "/api/infer not found in stats", "raw": rows[:5]}
+        return {"error": "infer endpoint not in stats", "raw": rows[:5]}
 
     return {
         "requests": int(infer["Request Count"]),
@@ -119,6 +123,13 @@ def main():
         default=None,
         help="Path to JPEG face image for realistic inference testing",
     )
+    parser.add_argument(
+        "--type",
+        choices=["json", "raw", "both"],
+        default="both",
+        dest="endpoint_type",
+        help="Endpoint to test (default: both)",
+    )
     args = parser.parse_args()
 
     if args.face_image:
@@ -142,7 +153,7 @@ def main():
     results = []
     for users in concurrency:
         print(f"{users:>6} ", end="", flush=True)
-        result = run_locust(args.host, users, args.duration, args.image_size)
+        result = run_locust(args.host, users, args.duration, args.image_size, args.endpoint_type)
         results.append((users, result))
 
         if "error" in result:

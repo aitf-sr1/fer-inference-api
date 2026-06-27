@@ -174,12 +174,13 @@ def _fetch_metrics(host: str) -> dict | None:
 
 
 def _run_sweep(
-    host: str, duration: int, concurrency: list[int]
+    host: str, duration: int, concurrency: list[int],
+    endpoint_type: str = "both",
 ) -> dict[int, dict]:
     results = {}
     for users in concurrency:
         print(f"    users={users:>3} ", end="", flush=True)
-        r = _run_locust_single(host, users, duration)
+        r = _run_locust_single(host, users, duration, endpoint_type)
         results[users] = r
         if "error" in r:
             print(f"ERROR: {r['error']}")
@@ -194,7 +195,8 @@ def _run_sweep(
 
 
 def _run_locust_single(
-    host: str, users: int, duration: int
+    host: str, users: int, duration: int,
+    endpoint_type: str = "both",
 ) -> dict:
     with tempfile.NamedTemporaryFile(
         suffix=".csv", mode="w+", delete=False
@@ -220,6 +222,8 @@ def _run_locust_single(
                 "--headless",
                 "--csv",
                 stats_path,
+                "--type",
+                endpoint_type,
             ],
             capture_output=True,
             text=True,
@@ -243,9 +247,9 @@ def _parse_csv(csv_path: Path) -> dict:
     with open(csv_path) as f:
         rows = list(csv.DictReader(f))
 
-    infer = next((r for r in rows if r["Name"] == "/api/infer"), None)
+    infer = next((r for r in rows if r["Name"] in ("/api/infer", "/api/infer/raw")), None)
     if not infer:
-        return {"error": "/api/infer not in stats", "raw": rows[:5]}
+        return {"error": "infer endpoint not in stats", "raw": rows[:5]}
 
     return {
         "requests": int(infer["Request Count"]),
@@ -320,6 +324,13 @@ def main():
         type=str,
         default=None,
         help="Path to JPEG face image for realistic inference testing",
+    )
+    parser.add_argument(
+        "--type",
+        choices=["json", "raw", "both"],
+        default="both",
+        dest="endpoint_type",
+        help="Endpoint to test (default: both)",
     )
     args = parser.parse_args()
 
@@ -400,7 +411,7 @@ def main():
             print("")
 
         try:
-            results = _run_sweep(host, args.duration, concurrency)
+            results = _run_sweep(host, args.duration, concurrency, args.endpoint_type)
         finally:
             if not args.no_server:
                 if compose_file:
