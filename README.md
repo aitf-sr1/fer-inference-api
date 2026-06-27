@@ -143,6 +143,21 @@ The `image` field accepts raw base64 or a data URL (`data:image/jpeg;base64,...`
 }
 ```
 
+### `POST /api/infer/raw`
+
+Run inference on a **raw image sent as the request body** (no base64, no JSON
+wrapper). Send the image bytes directly with an appropriate `Content-Type`
+(e.g. `image/jpeg`, `image/png`, `image/webp`, or `application/octet-stream`).
+Maximum body size is 5 MB.
+
+```bash
+curl -X POST http://localhost:8001/api/infer/raw \
+  -H "Content-Type: image/jpeg" \
+  --data-binary @face.jpg
+```
+
+The response shape is identical to `POST /api/infer`.
+
 ## Configuration
 
 Copy `.env.example` (CPU) or `.env.gpu.example` (GPU) to `.env` and adjust as needed.

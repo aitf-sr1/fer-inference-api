@@ -70,6 +70,37 @@ def test_infer_base64_raises_on_invalid_base64(monkeypatch):
         pipeline.infer_base64(bad_b64)
 
 
+def test_infer_bytes_decodes_raw_image(monkeypatch):
+    def _mock_init(self2):
+        self2._mock = False
+        self2._session = _FakeSession()
+        self2._detector = _FakeDetector()
+        self2._num_classes = 4
+
+    monkeypatch.setattr(InferencePipeline, "__init__", _mock_init)
+
+    pipeline = InferencePipeline()
+    raw = cv2.imencode(".jpg", np.zeros((480, 640, 3), dtype=np.uint8))[1].tobytes()
+    result = pipeline.infer_bytes(raw)
+    assert result["face_detected"] is True
+    assert "emotions" in result
+    assert "num_classes" in result
+
+
+def test_infer_bytes_raises_on_invalid_image(monkeypatch):
+    def _mock_init(self2):
+        self2._mock = False
+        self2._session = _FakeSession()
+        self2._detector = _FakeDetector()
+        self2._num_classes = 4
+
+    monkeypatch.setattr(InferencePipeline, "__init__", _mock_init)
+
+    pipeline = InferencePipeline()
+    with pytest.raises(ValueError, match="Could not decode image"):
+        pipeline.infer_bytes(b"not an image")
+
+
 def test_infer_no_face_returns_none(monkeypatch):
     class _NoFacePipeline(InferencePipeline):
         def infer(self, img_rgb):
