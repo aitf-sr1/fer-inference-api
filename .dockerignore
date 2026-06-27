@@ -1,5 +1,16 @@
+.env
 .venv/
+venv/
 .git/
 __pycache__/
 *.py[cod]
 tests/
+bench/
+models/
+assets/
+dist/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+docker-compose*.yml
+Dockerfile*
