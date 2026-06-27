@@ -5,7 +5,11 @@ import threading
 from contextlib import asynccontextmanager
 from typing import Dict, Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.concurrency import run_in_threadpool
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from .pipeline import InferencePipeline
 from .schemas import DeviceInfo, InferRequest, InferResponse, MetricsSummary
@@ -75,6 +79,20 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    # Binary bodies sent to the JSON endpoint produce errors whose `input`
+    # is raw bytes, which the default handler cannot JSON-encode. Fall back
+    # to a clean message and point at the raw endpoint.
+    try:
+        detail = jsonable_encoder(exc.errors())
+    except (UnicodeDecodeError, ValueError, TypeError):
+        detail = "Invalid request body. Send JSON to /api/infer or raw image bytes to /api/infer/raw."
+    return JSONResponse(status_code=422, content={"detail": detail})
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -94,6 +112,28 @@ def metrics() -> MetricsSummary:
 def infer(body: InferRequest) -> InferResponse:
     try:
         result = _pipeline.infer_base64(body.image)
+    except ValueError as e:
+        _logger.warning("Invalid request: %s", e)
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        _logger.exception("Unhandled error during inference")
+        raise HTTPException(status_code=500, detail="Internal server error")
+    _metrics.record(result.get("timings") or {})
+    return InferResponse(**result)
+
+
+_MAX_IMAGE_BYTES = 5_000_000
+
+
+@app.post("/api/infer/raw")
+async def infer_raw(request: Request) -> InferResponse:
+    img_bytes = await request.body()
+    if not img_bytes:
+        raise HTTPException(status_code=400, detail="Empty request body.")
+    if len(img_bytes) > _MAX_IMAGE_BYTES:
+        raise HTTPException(status_code=413, detail="Image too large.")
+    try:
+        result = await run_in_threadpool(_pipeline.infer_bytes, img_bytes)
     except ValueError as e:
         _logger.warning("Invalid request: %s", e)
         raise HTTPException(status_code=400, detail=str(e))

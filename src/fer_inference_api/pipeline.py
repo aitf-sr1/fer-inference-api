@@ -137,21 +137,33 @@ class InferencePipeline:
             },
         }
 
-    def infer_base64(self, b64_image: str) -> Dict[str, Any]:
+    def infer_bytes(self, img_bytes: bytes) -> Dict[str, Any]:
         t_start = time.perf_counter()
 
         if self._mock:
-            if "," in b64_image:
-                b64_image = b64_image.split(",", 1)[1]
             return _mock_infer(self._num_classes)
+
+        return self._decode_and_infer(img_bytes, t_start)
+
+    def infer_base64(self, b64_image: str) -> Dict[str, Any]:
+        t_start = time.perf_counter()
 
         if "," in b64_image:
             b64_image = b64_image.split(",", 1)[1]
+
+        if self._mock:
+            return _mock_infer(self._num_classes)
+
         try:
             img_bytes = base64.b64decode(b64_image, validate=True)
         except binascii.Error:
             raise ValueError("Invalid base64 encoding.")
 
+        return self._decode_and_infer(img_bytes, t_start)
+
+    def _decode_and_infer(
+        self, img_bytes: bytes, t_start: float
+    ) -> Dict[str, Any]:
         t_decode = time.perf_counter()
         img_array = np.frombuffer(img_bytes, dtype=np.uint8)
         img_bgr = cv2.imdecode(img_array, cv2.IMREAD_COLOR)

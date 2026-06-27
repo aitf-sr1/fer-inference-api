@@ -82,6 +82,7 @@ def test_client(mock_pipeline_result):
     mock_pipeline = MagicMock()
     mock_pipeline.device = "cpu"
     mock_pipeline.infer_base64.return_value = mock_pipeline_result
+    mock_pipeline.infer_bytes.return_value = mock_pipeline_result
     mock_pipeline.infer.return_value = mock_pipeline_result
 
     mod._pipeline = mock_pipeline
@@ -96,6 +97,7 @@ def test_client_no_face(mock_pipeline_no_face):
     mock_pipeline = MagicMock()
     mock_pipeline.device = "cpu"
     mock_pipeline.infer_base64.return_value = mock_pipeline_no_face
+    mock_pipeline.infer_bytes.return_value = mock_pipeline_no_face
     mock_pipeline.infer.return_value = mock_pipeline_no_face
 
     mod._pipeline = mock_pipeline

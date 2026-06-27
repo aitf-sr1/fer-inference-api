@@ -8,9 +8,4 @@ services:
       - ./assets:/app/assets:ro
     env_file: .env
     restart: unless-stopped
-    networks:
-      - app_network
 
-networks:
-  app_network:
-    external: true
