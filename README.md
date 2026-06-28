@@ -31,7 +31,7 @@ huggingface-cli download unity/inference-engine-blaze-face \
 
 # ConvNeXt V2 FER model
 huggingface-cli download aitf-ub-2026/ub-sr-01-model-fer-convnextv2-datasetv3 \
-  convnextv2_femto.onnx --local-dir models/
+  "convnextv2_femto_v3(crop).onnx" --local-dir models/
 
 # Start the API
 docker compose up -d --build
@@ -62,7 +62,7 @@ Two ONNX model files are required:
 | Model     | Files                          | Default Path                         | Description                          |
 | --------- | ------------------------------ | ------------------------------------ | ------------------------------------ |
 | BlazeFace | `blaze_face_short_range.onnx`  | `assets/blaze_face_short_range.onnx` | Face detection model (128x128 input) |
-| ConvNeXt  | `convnextv2_femto.onnx`          | `models/convnextv2_femto.onnx`       | FER model (224x224 input)            |
+| ConvNeXt  | `convnextv2_femto_v3(crop).onnx`          | `models/convnextv2_femto_v3(crop).onnx`       | FER model (224x224 input)            |
 
 ### Download
 
@@ -77,7 +77,7 @@ huggingface-cli download unity/inference-engine-blaze-face \
 
 ```bash
 huggingface-cli download aitf-ub-2026/ub-sr-01-model-fer-convnextv2-datasetv3 \
-  convnextv2_femto.onnx --local-dir models/
+  "convnextv2_femto_v3(crop).onnx" --local-dir models/
 ```
 
 > The previous ConvNeXt Atto model used external ONNX data (`.onnx.data` file). The Femto model is a single self-contained `.onnx` file — no companion file needed.
@@ -164,7 +164,7 @@ Copy `.env.example` (CPU) or `.env.gpu.example` (GPU) to `.env` and adjust as ne
 
 | Variable               | CPU default | GPU default | Description                 |
 | ---------------------- | ----------- | ----------- | --------------------------- |
-| `MODEL_PATH`           | `/app/models/convnextv2_femto.onnx` | same | Path to the FER ONNX model |
+| `MODEL_PATH`           | `/app/models/convnextv2_femto_v3(crop).onnx` | same | Path to the FER ONNX model |
 | `BLAZEFACE_MODEL_PATH` | `/app/assets/blaze_face_short_range.onnx` | same | Path to BlazeFace ONNX model |
 | `NUM_WORKERS`          | `8`         | `2`         | Gunicorn worker processes   |
 | `HOST_PORT`            | `8001`      | `8001`      | Host port                   |

@@ -10,7 +10,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    model_path: Path = Path("./models/model.onnx")
+    model_path: Path = Path("./models/convnextv2_femto_v3(crop).onnx")
     blazeface_model_path: Path = Path("./assets/blaze_face_short_range.onnx")
     mock_mode: bool = False
     onnx_intra_threads: int = 0
