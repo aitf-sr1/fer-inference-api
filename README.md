@@ -26,11 +26,11 @@ cp .env.example .env
 
 # Download model files (see below for details)
 # BlazeFace
-huggingface-cli download unity/inference-engine-blaze-face \
+hf download unity/inference-engine-blaze-face \
   blaze_face_short_range.onnx --local-dir assets/
 
 # ConvNeXt V2 FER model
-huggingface-cli download aitf-ub-2026/ub-sr-01-model-fer-convnextv2-datasetv3 \
+hf download aitf-ub-2026/ub-sr-01-model-fer-convnextv2-datasetv3 \
   "convnextv2_femto_v3(crop).onnx" --local-dir models/
 
 # Start the API
@@ -69,14 +69,14 @@ Two ONNX model files are required:
 **BlazeFace** — [unity/inference-engine-blaze-face](https://huggingface.co/unity/inference-engine-blaze-face/tree/main/models)
 
 ```bash
-huggingface-cli download unity/inference-engine-blaze-face \
+hf download unity/inference-engine-blaze-face \
   blaze_face_short_range.onnx --local-dir assets/
 ```
 
 **ConvNeXt V2 Femto** (FER) — [aitf-ub-2026/ub-sr-01-model-fer-convnextv2-datasetv3](https://huggingface.co/aitf-ub-2026/ub-sr-01-model-fer-convnextv2-datasetv3/tree/main)
 
 ```bash
-huggingface-cli download aitf-ub-2026/ub-sr-01-model-fer-convnextv2-datasetv3 \
+hf download aitf-ub-2026/ub-sr-01-model-fer-convnextv2-datasetv3 \
   "convnextv2_femto_v3(crop).onnx" --local-dir models/
 ```
 
